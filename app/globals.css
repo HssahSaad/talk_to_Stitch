@@ -2,32 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+:root {
+  --primary-color: 37, 99, 235;
+  --secondary-color: 63, 131, 248;
+  --text-color: 0, 0, 0;
+  --button-bg: 37, 99, 235;
+  --button-hover-bg: 25, 85, 175;
+  --button-text: 255, 255, 255;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: rgb(var(--text-color));
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc, #ffffff);
+}
+
+@layer components {
+  .glow-text {
+    background: linear-gradient(135deg, rgba(var(--primary-color)), rgba(var(--secondary-color)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 10px rgba(var(--primary-color), 0.3);
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  .hover-scale {
+    transition: transform 0.2s ease;
+  }
+  .hover-scale:hover {
+    transform: scale(1.05);
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: transform 0.2s ease;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+  }
+  .button {
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    background-color: rgb(var(--button-bg));
+    color: rgb(var(--button-text));
+  }
+  .button:hover {
+    transform: translateY(-1px);
+    background-color: rgb(var(--button-hover-bg));
+  }
+  .button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }

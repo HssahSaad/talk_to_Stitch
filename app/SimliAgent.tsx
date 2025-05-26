@@ -1,14 +1,17 @@
 import React, { useRef, useState } from "react";
 import { DailyProvider } from "@daily-co/daily-react";
-import DailyIframe, { DailyCall } from "@daily-co/daily-js";
+import Daily from "@daily-co/daily-js";
+
+// Type definition for Daily call object
+type DailyCallObject = ReturnType<typeof Daily.createCallObject>;
 import VideoBox from "@/app/Components/VideoBox";
-import cn from "./utils/TailwindMergeAndClsx";
-import IconSparkleLoader from "@/media/IconSparkleLoader";
+import cn from "clsx";
+import Link from "next/link";
 
 interface SimliAgentProps {
   onStart: () => void;
   onClose: () => void;
-}
+};
 
 // Get your Simli API key from https://app.simli.com/
 const SIMLI_API_KEY = process.env.NEXT_PUBLIC_SIMLI_API_KEY;
@@ -18,10 +21,27 @@ const SimliAgent: React.FC<SimliAgentProps> = ({ onStart, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAvatarVisible, setIsAvatarVisible] = useState(false);
 
+  // Type declarations
+  type Participant = {
+    user_name: string;
+    session_id: string;
+  };
+
+  // Type definition for Daily participants
+  type DailyParticipants = Record<string, Participant>;
+
   const [tempRoomUrl, setTempRoomUrl] = useState<string>("");
-  const [callObject, setCallObject] = useState<DailyCall | null>(null);
-  const myCallObjRef = useRef<DailyCall | null>(null);
+  const [callObject, setCallObject] = useState<DailyCallObject | null>(null);
+  const myCallObjRef = useRef<DailyCallObject | null>(null);
   const [chatbotId, setChatbotId] = useState<string | null>(null);
+
+  const handleStopInteraction = () => {
+    if (callObject) {
+      callObject.leave().then(() => {
+        onClose();
+      });
+    }
+  };
 
   /**
    * Create a new Simli room and join it using Daily
@@ -34,33 +54,26 @@ const SimliAgent: React.FC<SimliAgentProps> = ({ onStart, onClose }) => {
     // 2- Cutomize your agent and copy the code output
     // 3- PASTE YOUR CODE OUTPUT FROM SIMLI BELOW 👇
     /**********************************/
-
-    const response = await fetch("https://api.simli.ai/startE2ESession", {
-      method: "POST",
+    const response = await fetch("https://api.simli.ai/session/2418de22-209b-4add-b55f-1192ba81bee2/gAAAAABoNCVuKqiLMDcBI2bG2wTekP4wFzlIKZw27yTqUsbQgo-MJL6K9E3KoswVc954W7xD8vmdfw_dkhH4mdY4fma2k3LBtW5HtNiGWXxeAZypSIeDPxE8qh-3Z9wxQW9AkbbejjgE-A1KmccJqw63pzPdvHaQcNzw5yCZ9iL3YYz-2qXBiQK_DUQHJla1VO6k39Q1YOr-pwHyVfws2fkTWrU_G2A0Zs5U2ZOzKwIidNMwFwuQqUnqquOcI3QHbg9XArivZGb3jkF8wv6N4EilnRDKWbgdzkceksjS9-gH2bMrfxjT454saGTyKmfEFsadbDVP9nnmCAt2w4GOfbNpoMuo2U6Ig_jiW0XJqJOPUW2tfPFO9EYcrnrEnHdLft4wwBnoEwfQsnZY4-80NFm07DndzWSDOQ==", {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
+        "Accept": "application/json",
       },
-      body: JSON.stringify({
-        apiKey: SIMLI_API_KEY,
-        faceId: "",
-        voiceId: "",
-        firstMessage: "",
-        systemPrompt: "",
-      }),
-    });
+    })
 
     const data = await response.json();
     const roomUrl = data.roomUrl;
 
     /**********************************/
-    
+
     // Print the API response 
     console.log("API Response", data);
 
     // Create a new Daily call object
-    let newCallObject = DailyIframe.getCallInstance();
+    let newCallObject = Daily.getCallInstance();
     if (newCallObject === undefined) {
-      newCallObject = DailyIframe.createCallObject({
+      newCallObject = Daily.createCallObject({
         videoSource: false,
       });
     }
@@ -76,7 +89,7 @@ const SimliAgent: React.FC<SimliAgentProps> = ({ onStart, onClose }) => {
 
     // Start checking if Simli's Chatbot Avatar is available
     loadChatbot();
-  };  
+  };
 
   /**
    * Checking if Simli's Chatbot avatar is available then render it
@@ -102,7 +115,7 @@ const SimliAgent: React.FC<SimliAgentProps> = ({ onStart, onClose }) => {
     } else {
       setTimeout(loadChatbot, 500);
     }
-  };  
+  };
 
   /**
    * Leave the room
@@ -131,52 +144,87 @@ const SimliAgent: React.FC<SimliAgentProps> = ({ onStart, onClose }) => {
   };
 
   return (
-    <>
-      {isAvatarVisible && (
-        <div className="h-[350px] w-[350px]">
-          <div className="h-[350px] w-[350px]">
-            <DailyProvider callObject={callObject}>
-              {chatbotId && <VideoBox key={chatbotId} id={chatbotId} />}
-            </DailyProvider>
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-white">
+      {/* Header */}
+      <header className="w-full py-4 px-4 bg-gradient-to-r from-indigo-50 to-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="bg-white rounded-full p-2 shadow-lg mb-4">
+            <img src="/lilo-stitch-logo.png" alt="Stitch Assistant Logo" className="w-48 h-48" />
+          </div>
+          <h1 className="text-3xl font-bold text-primary">Stitch Assistant</h1>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 flex items-center justify-center p-8">
+        <div className="max-w-2xl w-full text-center">
+          <div className="flex flex-col items-center space-y-12">
+            {isAvatarVisible ? (
+              <div className="card p-8 text-center">
+                <div className="relative">
+                  <DailyProvider callObject={callObject}>
+                    {chatbotId && <VideoBox key={chatbotId} id={chatbotId} />}
+                  </DailyProvider>
+                </div>
+                <div className="mt-6 text-center space-y-6">
+                  <p className="text-3xl font-bold text-primary">
+                    Hi, I'm Lilo – your emotional support buddy.
+                  </p>
+                  <p className="text-xl text-gray-700">
+                    A safe space for you to share your thoughts and feelings
+                  </p>
+                </div>
+                <button
+                  onClick={handleStopInteraction}
+                  className="button"
+                >
+                  End Session
+                </button>
+              </div>
+            ) : (
+              <div className="text-center">
+                <button
+                  onClick={handleJoinRoom}
+                  disabled={isLoading}
+                  className="button disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <span className="animate-pulse">Connecting...</span>
+                  ) : (
+                    <span>Start Talking to AI</span>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      )}
-      <div className="flex flex-col items-center">
-        {!isAvatarVisible ? (
-          <button
-            onClick={handleJoinRoom}
-            disabled={isLoading}
-            className={cn(
-              "w-full h-[52px] mt-4 disabled:bg-[#343434] disabled:text-white disabled:hover:rounded-[100px] bg-simliblue text-white py-3 px-6 rounded-[100px] transition-all duration-300 hover:text-black hover:bg-white hover:rounded-sm",
-              "flex justify-center items-center"
-            )}
-          >
-            {isLoading ? (
-              <IconSparkleLoader className="h-[20px] animate-loader" />
-            ) : (
-              <span className="font-abc-repro-mono font-bold w-[164px]">
-                Test Interaction
-              </span>
-            )}
-          </button>
-        ) : (
-          <>
-            <div className="flex items-center gap-4 w-full">
-              <button
-                onClick={handleLeaveRoom}
-                className={cn(
-                  "mt-4 group text-white flex-grow bg-red hover:rounded-sm hover:bg-white h-[52px] px-6 rounded-[100px] transition-all duration-300"
-                )}
-              >
-                <span className="font-abc-repro-mono group-hover:text-black font-bold w-[164px] transition-all duration-300">
-                  Stop Interaction
-                </span>
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </>
+      </main>
+      <footer className="w-full py-6 px-4 border-t border-gray-200">
+        <div className="max-w-4xl mx-auto space-y-4">
+          <div className="text-center">
+            <h3 className="text-xl font-semibold mb-2">About Stitch</h3>
+            <p className="text-gray-700">
+              Stitch is a bilingual (Arabic-English) emotional support character inspired by the heart of Lilo & Stitch. 
+              She helps young people through life's tough moments — work stress, family issues, friendships, and more — 
+              with empathy, humor, and love. Quirky but kind, she reminds you:
+            </p>
+            <p className="text-primary font-semibold mt-2">"Ohana means no one gets left behind."</p>
+            <p className="text-gray-700">أنا هنا علشانك. 💙</p>
+          </div>
+          <div className="text-center mt-4">
+            <Link
+              href="https://x.com/StitchTher"
+              target="_blank"
+              className="flex items-center justify-center space-x-1 text-primary hover:text-primary/80 transition-colors"
+            >
+              <span>Follow Stitch on Twitter</span>
+              <span className="text-primary">💙</span>
+            </Link>
+            <p className="mt-2 text-gray-700">Built with love using Simli</p>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 };
 
