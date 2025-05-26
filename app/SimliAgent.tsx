@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef, useState } from "react";
 import { DailyProvider } from "@daily-co/daily-react";
 import Daily from "@daily-co/daily-js";
